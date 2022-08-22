@@ -7,6 +7,43 @@
 #include "resources/messages.c"
 #include "resources/ascii.c"
 
+// config
+const int max_word_length = 15;
+const int max_lives = 10;
+
+typedef struct
+{
+    char wanted_word[max_word_length];
+    int word_length;
+    int remaining_lives;
+    int attempts;
+} Meta;
+
+Meta Runtime; // ? == getter
+
+Meta reset(Meta *runtime)
+{
+    strcpy(runtime->wanted_word, "");
+    runtime->word_length = 0;
+    runtime->remaining_lives = 0;
+    runtime->attempts = 0;
+    return *runtime;
+}
+
+Meta set(Meta *runtime, char *ww, int wl, int rl, int a)
+{
+    strcpy(runtime->wanted_word, ww);
+    runtime->word_length = wl;
+    runtime->remaining_lives = rl;
+    runtime->attempts = a;
+    return *runtime;
+}
+
+Meta get()
+{
+    return Runtime;
+}
+
 void clear_screen()
 {
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
@@ -31,7 +68,6 @@ int mesure_word(const char *w)
     return strlen(w);
 }
 
-// & messages to interact with user
 void publish_opening()
 {
     printf("%s", status_messages[0]);
@@ -56,34 +92,28 @@ void publish_opening()
     printf("%s", status_messages[8]);
 }
 
-int publish_new_game(l)
+void dashboard()
 {
-    void publish_hangman_status();
-
     printf("\n");
     printf("%s", status_messages[4]);
-    printf("%d", l);
+    printf("%d", get().word_length);
     printf("\n");
     printf("%s", status_messages[9]);
 
-    for (size_t i = 0; i < l; i++)
+    for (size_t i = 0; i < get().word_length; i++)
     {
         printf("%s", "_ ");
-        if (i == l - 1)
+        if (i == get().word_length - 1)
         {
             printf("\n\n");
         }
     }
-    return 1;
-}
 
-void publish_dashboard(l, t)
-{
     printf("%s", status_messages[10]);
-    printf("%d", l);
+    printf("%d", get().attempts);
     printf("\n");
     printf("%s", status_messages[11]);
-    printf("%d", t);
+    printf("%d", get().remaining_lives);
     printf("\n");
 }
 
@@ -185,19 +215,18 @@ int main()
         publish_opening();
         while (1)
         {
-            if (getchar() == '\n')
+            if (getchar() == '\n') // enter
             {
-                printf("%s", status_messages[2]);
-                sleep(2);
+                // ! game starts here:
                 clear_screen();
 
-                // & start game
-                if (publish_new_game(length))
-                {
-                    publish_dashboard(10, 0);
-                    char input[150];
-                    scanf("%s", input);                
-                    }
+                reset(&Runtime);
+                set(&Runtime, "Dienstag", 7, 10, 0);
+
+                dashboard();
+
+                char input[150];
+                scanf("%s", input);
                 break;
             }
         }
