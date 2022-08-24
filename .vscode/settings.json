@@ -1,5 +1,15 @@
 {
     "files.associations": {
-        "chrono": "c"
+        "chrono": "c",
+        "stdio.h": "c",
+        "array": "c",
+        "vector": "c",
+        "string": "c",
+        "string_view": "c",
+        "iosfwd": "c",
+        "__bit_reference": "c",
+        "bitset": "c",
+        "unordered_map": "c",
+        "algorithm": "c"
     }
 }
