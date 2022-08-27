@@ -10,6 +10,26 @@
         "__bit_reference": "c",
         "bitset": "c",
         "unordered_map": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "ctype.h": "c",
+        "stdlib.h": "c",
+        "string.h": "c",
+        "typeinfo": "c",
+        "ostream": "c",
+        "__hash_table": "c",
+        "__split_buffer": "c",
+        "atomic": "c",
+        "ios": "c",
+        "system_error": "c",
+        "__config": "c",
+        "__locale": "c",
+        "istream": "c",
+        "locale": "c",
+        "memory": "c",
+        "tuple": "c",
+        "variant": "c",
+        "__functional_base": "c",
+        "utility": "c",
+        "sstream": "c"
     }
 }

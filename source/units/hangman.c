@@ -8,12 +8,22 @@
 #include "resources/ascii.c"
 
 // config
-const int max_word_length = 15;
+const int max_length = 15;
 const int max_lives = 10;
+
+char input[max_length];
+
+struct Node
+{
+    char value[max_length];
+    struct Node *next;
+};
+
+struct Node *head = NULL;
 
 typedef struct
 {
-    char wanted_word[max_word_length];
+    char wanted_word[max_length];
     int word_length;
     int remaining_lives;
     int attempts;
@@ -44,6 +54,60 @@ Meta get()
     return Runtime;
 }
 
+void insertIntoNode(struct Node **head_ref, char new_value[max_length])
+{
+    struct Node *new_node = (struct Node *)malloc(sizeof(struct Node));
+    strcpy(new_node->value, new_value);
+    new_node->next = (*head_ref);
+    (*head_ref) = new_node;
+}
+
+void deleteNode(struct Node **head_ref, char key[max_length])
+{
+    struct Node *temp = *head_ref, *prev;
+
+    if (temp != NULL && temp->value == key)
+    {
+        *head_ref = temp->next;
+        free(temp);
+        return;
+    }
+
+    while (temp != NULL && temp->value != key)
+    {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (temp == NULL)
+        return;
+
+    prev->next = temp->next;
+    free(temp);
+}
+
+void printNode(struct Node *node)
+{
+    while (node != NULL)
+    {
+        printf(" %s ", node->value);
+        node = node->next;
+    }
+}
+
+int searchNode(struct Node **head_ref, char key[max_length])
+{
+    struct Node *current = *head_ref;
+
+    while (current != NULL)
+    {
+        if (strcmp(current->value, key) == 0)
+            return 1;
+        current = current->next;
+    }
+    return 0;
+}
+
 void clear_screen()
 {
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
@@ -53,6 +117,22 @@ void clear_screen()
 #if defined(_WIN32) || defined(_WIN64)
     system("cls");
 #endif
+}
+
+void pressEnterToContinue(void)
+{
+    fflush(stdout);
+    getchar();
+}
+
+void flush(FILE *in)
+{
+    int ch;
+    do
+    {
+        ch = fgetc(in);
+    } while (ch != EOF && ch != '\n');
+    clearerr(in);
 }
 
 char *gen_word()
@@ -90,10 +170,14 @@ void publish_opening()
     printf("%s", credit_messages[1]);
 
     printf("%s", status_messages[8]);
+    flush(stdin);
+    pressEnterToContinue();
 }
 
 void dashboard()
 {
+    printf("\n");
+    puts(ascii_divider[0]);
     printf("\n");
     printf("%s", status_messages[4]);
     printf("%d", get().word_length);
@@ -114,6 +198,8 @@ void dashboard()
     printf("\n");
     printf("%s", status_messages[11]);
     printf("%d", get().remaining_lives);
+    printf("\n \n");
+    puts(ascii_divider[0]);
     printf("\n");
 }
 
@@ -222,15 +308,93 @@ int main()
 
                 reset(&Runtime);
                 set(&Runtime, "Dienstag", 7, 10, 0);
-
-                dashboard();
-
-                char input[150];
-                scanf("%s", input);
+                //void sequence();
+                //sequence();
                 break;
             }
         }
         return 0;
     }
     return 0;
+}
+
+char *getAndFilterInput()
+{
+    printf("%s", "Eingabe: ");
+    scanf("%s", input);
+    int il; // * == input_length
+    il = 0;
+
+    for (int s = 0; s < strlen(input); s++)
+    {
+        if (input[s] == ' ')
+        {
+            puts("Error1leer\n");
+            break;
+        }
+        if (!isalpha(input[s]))
+        {
+            strcpy(input, "\0");
+        }
+        il++;
+    }
+
+    if (il == 1 &&
+        il < 2 &&
+        il > 0 &&
+        il != ' ')
+    {
+        int i;
+        for (i = 0; input[i] != '\0'; i++)
+        {
+            if (input[i] >= 'a' && input[i] <= 'z')
+            {
+                input[i] = input[i] - 32;
+            }
+        }
+    }
+
+    if (il >= 2)
+    {
+        strcpy(input, "\0");
+    }
+
+
+
+    return input;
+}
+
+void sequence()
+{
+    dashboard();
+
+    char callback[max_length];
+    strcpy(callback, getAndFilterInput());
+
+    clear_screen();
+
+    if (*callback == 0)
+    {
+        puts("Bitte nur einen Buchstaben eingeben");
+        puts("Bitte erneut versuchen.");
+    }
+    else if (searchNode(&head, callback))
+    {
+        puts("Berreits vorhanden");
+        puts("Bitte erneut versuchen.");
+    }
+    else
+    {
+        puts("Eingabe erfolgreich!");
+        insertIntoNode(&head, callback);
+
+        printf("List: ");
+        printNode(head);
+        printf("%s", "\n");
+    }
+
+    flush(stdin);
+    pressEnterToContinue();
+    clear_screen();
+    sequence();
 }
