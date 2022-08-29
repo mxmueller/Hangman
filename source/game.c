@@ -3,11 +3,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <time.h>
+ 
 // * outsourced text messages and ascii art *
 #include "resources/messages.c"
 #include "resources/ascii.c"
+#include "resources/words/words.c"
 
 // * config *
+#define ERR_MESSAGE__NO_MEM "Not enough memory!"
+#define allocator(element, type) _allocator(element, sizeof(type))
+
 const int max_length = 15;
 const int max_lives = 10;
 
@@ -50,12 +56,72 @@ void flush(FILE *in)
     clearerr(in);
 }
 
+/** Allocator function (safe alloc) */
+void *_allocator(size_t element, size_t typeSize)
+{
+    void *ptr = NULL;
+    /* check alloc */
+    if ((ptr = calloc(element, typeSize)) == NULL)
+    {
+        printf(ERR_MESSAGE__NO_MEM);
+        exit(1);
+    }
+    /* return pointer */
+    return ptr;
+}
+
+/** Append function (safe mode) */
+char *append(const char *input, const char c)
+{
+    char *newString, *ptr;
+
+    /* alloc */
+    newString = allocator((strlen(input) + 2), char);
+    /* Copy old string in new (with pointer) */
+    ptr = newString;
+    for (; *input; input++)
+    {
+        *ptr = *input;
+        ptr++;
+    }
+    /* Copy char at end */
+    *ptr = c;
+    /* return new string (for dealloc use free().) */
+    return newString;
+}
+
+int compare(char a[], char b)
+{
+    int flag = 0, i = 0;              // integer variables declaration
+    while (a[i] != '\0' && b != '\0') // while loop
+    {
+        if (a[i] != b)
+        {
+            flag = 1;
+            break;
+        }
+        i++;
+    }
+    if (flag == 0)
+        return 0;
+    else
+        return 1;
+}
+
+int ran() {
+	int i;
+	int k;
+ 
+	i = 15;
+	k = 0;
+	srand((unsigned)time(NULL));
+	k = rand() % i;
+	return k;
+}
+
 const char *wordGen()
 {
-    char *demo, *gen;
-    demo = "SAMSTAG";
-    gen = demo;
-    return gen;
+    return words[ran()];
 }
 
 int wordMesure(const char *w)
@@ -120,6 +186,23 @@ int searchNode(struct Node **head_ref, char key[max_length])
     {
         if (strcmp(current->value, key) == 0)
             return 1;
+        current = current->next;
+    }
+    return 0;
+}
+
+int searchNodeAlternate(struct Node **head_ref, char key)
+{
+    struct Node *current = *head_ref;
+
+    while (current != NULL)
+    {
+        int compare(char[], char);
+
+        int c = compare(&current->value[0], key); // calling compare() function
+        if (c == 0)
+            return 1;
+
         current = current->next;
     }
     return 0;
@@ -329,13 +412,13 @@ void dashboard()
 }
 
 char empty[20] = "_";
-char const * underscore = " _";
+char const *underscore = " _";
 void game()
 {
     if (loadMessages() && loadAscii())
         welcome();
 
-    set(&Runtime, wordGen(), 3, 0);
+    set(&Runtime, wordGen(), max_lives, 0);
 
     for (size_t i = 1; i < wordMesure(get().wanted_word); i++)
     {
@@ -350,6 +433,41 @@ void game()
 
 void sequence(config)
 {
+    char s1[128];
+    char sw[128];
+    int win = 1;
+
+    strcpy(sw, get().wanted_word);
+    memset(s1, '\0', sizeof(s1));
+
+    for (int pos = 0; pos < strlen(sw); pos++)
+    {
+        if (searchNodeAlternate(&head, sw[pos]))
+        {
+            char *s2;
+
+            s2 = append(s1, sw[pos]);
+            strcpy(s1, s2);
+            strcat(s1, " ");
+            /* dealloc */
+            free(s2);
+            s2 = NULL;
+        }
+        else
+        {
+            strcat(s1, "_ ");
+            win = 0;
+        }
+    }
+
+    if (win)
+    {
+        clear();
+        void win();
+        win();
+    }
+
+    strcpy(frontend, s1);
     dashboard();
 
     if (!config)
@@ -427,4 +545,13 @@ void sequence(config)
         get().attempts + 1);
 
     sequence(1);
+}
+
+void win() 
+{
+    puts("Gewonnen!!");
+    puts("Beenden:");
+    fflush(stdin);
+    enter();
+    exit(0);
 }
